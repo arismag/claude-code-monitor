@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { captureTerminalScreen, isMacOS } from '../src/utils/screen-capture.js';
+import { isMacOS } from '../src/utils/focus.js';
+import { captureTerminalScreen } from '../src/utils/screen-capture.js';
 
 describe('screen-capture', () => {
   describe('isMacOS', () => {
@@ -34,49 +35,28 @@ describe('screen-capture', () => {
   });
 
   describe('captureTerminalScreen', () => {
-    const originalPlatform = process.platform;
-
     afterEach(() => {
-      Object.defineProperty(process, 'platform', {
-        value: originalPlatform,
-      });
       vi.restoreAllMocks();
     });
 
-    it('should return null on non-macOS platform', async () => {
-      Object.defineProperty(process, 'platform', {
-        value: 'linux',
-      });
-      const result = await captureTerminalScreen('/dev/pts/0');
+    it('should return null for invalid tty path', async () => {
+      const result = await captureTerminalScreen('/invalid/path');
       expect(result).toBeNull();
     });
 
-    it('should return null for invalid tty path', async () => {
-      if (process.platform === 'darwin') {
-        const result = await captureTerminalScreen('/invalid/path');
-        expect(result).toBeNull();
-      }
-    });
-
     it('should return null for empty tty path', async () => {
-      if (process.platform === 'darwin') {
-        const result = await captureTerminalScreen('');
-        expect(result).toBeNull();
-      }
+      const result = await captureTerminalScreen('');
+      expect(result).toBeNull();
     });
 
     it('should return null for tty path with directory traversal', async () => {
-      if (process.platform === 'darwin') {
-        const result = await captureTerminalScreen('/dev/../dev/ttys001');
-        expect(result).toBeNull();
-      }
+      const result = await captureTerminalScreen('/dev/../dev/ttys001');
+      expect(result).toBeNull();
     });
 
     it('should return null for tty path with special characters', async () => {
-      if (process.platform === 'darwin') {
-        const result = await captureTerminalScreen('/dev/ttys001; rm -rf /');
-        expect(result).toBeNull();
-      }
+      const result = await captureTerminalScreen('/dev/ttys001; rm -rf /');
+      expect(result).toBeNull();
     });
 
     it('should accept valid macOS tty format', async () => {
@@ -90,14 +70,11 @@ describe('screen-capture', () => {
       }
     });
 
-    it('should accept valid Linux tty format on macOS', async () => {
-      // Skip on CI - AppleScript hangs without terminal apps
-      if (process.platform === 'darwin' && !process.env.CI) {
-        // Linux format is accepted by the validator
-        const result = await captureTerminalScreen('/dev/pts/0');
-        // May return null or Base64 string (Ghostty fallback captures first window)
-        expect(result === null || typeof result === 'string').toBe(true);
-      }
+    it('should accept valid Linux tty format', async () => {
+      // On Linux, screen capture returns null (Phase 2 feature)
+      // On macOS, may return null or Base64 string
+      const result = await captureTerminalScreen('/dev/pts/0');
+      expect(result === null || typeof result === 'string').toBe(true);
     });
 
     it('should return Base64 string or null for valid tty', async () => {

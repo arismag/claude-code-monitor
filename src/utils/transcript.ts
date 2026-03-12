@@ -6,7 +6,18 @@ import { join } from 'node:path';
  * Build transcript file path from cwd and session_id.
  * Claude Code stores transcripts at ~/.claude/projects/{encoded-cwd}/{session_id}.jsonl
  */
+/**
+ * Valid absolute path pattern.
+ * Must start with / and contain only safe characters (no null bytes, no control chars).
+ */
+const VALID_CWD_PATTERN = /^\/[\w/.@ -]+$/;
+
 export function buildTranscriptPath(cwd: string, sessionId: string): string {
+  // Validate cwd is a reasonable absolute path to prevent path traversal
+  if (!cwd || !VALID_CWD_PATTERN.test(cwd)) {
+    throw new Error(`Invalid cwd path: ${cwd}`);
+  }
+
   // Encode cwd: replace / and . with - (including leading /)
   const encodedCwd = cwd.replace(/[/.]/g, '-');
   return join(homedir(), '.claude', 'projects', encodedCwd, `${sessionId}.jsonl`);

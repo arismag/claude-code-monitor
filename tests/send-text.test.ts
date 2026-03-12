@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { resetPlatformProvider } from '../src/utils/platform/index.js';
 import {
   ALLOWED_KEYS,
   ARROW_KEY_CODES,
@@ -75,41 +76,36 @@ describe('send-text', () => {
       Object.defineProperty(process, 'platform', {
         value: originalPlatform,
       });
+      resetPlatformProvider();
     });
 
-    it('should return error for non-macOS platform', () => {
+    it('should return error for unsupported platform', () => {
       Object.defineProperty(process, 'platform', {
-        value: 'linux',
+        value: 'win32',
       });
+      resetPlatformProvider();
       const result = sendTextToTerminal('/dev/pts/0', 'test');
       expect(result.success).toBe(false);
-      expect(result.error).toBe('This feature is only available on macOS');
+      expect(result.error).toBe('Terminal control is not supported on this platform');
     });
 
     it('should return error for invalid tty path', () => {
-      // Only test on macOS where this check is reached
-      if (process.platform === 'darwin') {
-        const result = sendTextToTerminal('/invalid/path', 'test');
-        expect(result.success).toBe(false);
-        expect(result.error).toBe('Invalid TTY path');
-      }
+      const result = sendTextToTerminal('/invalid/path', 'test');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid TTY path');
     });
 
     it('should return error for empty text', () => {
-      if (process.platform === 'darwin') {
-        const result = sendTextToTerminal('/dev/ttys001', '');
-        expect(result.success).toBe(false);
-        expect(result.error).toBe('Text cannot be empty');
-      }
+      const result = sendTextToTerminal('/dev/ttys001', '');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Text cannot be empty');
     });
 
     it('should return error for text exceeding max length', () => {
-      if (process.platform === 'darwin') {
-        const longText = 'a'.repeat(10001);
-        const result = sendTextToTerminal('/dev/ttys001', longText);
-        expect(result.success).toBe(false);
-        expect(result.error).toContain('exceeds maximum length');
-      }
+      const longText = 'a'.repeat(10001);
+      const result = sendTextToTerminal('/dev/ttys001', longText);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('exceeds maximum length');
     });
   });
 
@@ -148,55 +144,34 @@ describe('send-text', () => {
       Object.defineProperty(process, 'platform', {
         value: originalPlatform,
       });
+      resetPlatformProvider();
     });
 
-    it('should accept arrow keys as valid input (not reject for length or invalid key)', () => {
-      // Skip on CI - AppleScript hangs without terminal apps
-      if (process.platform === 'darwin' && !process.env.CI) {
-        // These should not return "Invalid key" error or "Key must be a single character" error
-        const upResult = sendKeystrokeToTerminal('/dev/ttys001', 'up');
-        const downResult = sendKeystrokeToTerminal('/dev/ttys001', 'down');
-        const leftResult = sendKeystrokeToTerminal('/dev/ttys001', 'left');
-        const rightResult = sendKeystrokeToTerminal('/dev/ttys001', 'right');
-
-        // Should not return invalid key error (may fail for other reasons like terminal not found)
-        expect(upResult.error).not.toBe('Invalid key. Allowed: y, n, a, 1-9, escape');
-        expect(downResult.error).not.toBe('Invalid key. Allowed: y, n, a, 1-9, escape');
-        expect(leftResult.error).not.toBe('Invalid key. Allowed: y, n, a, 1-9, escape');
-        expect(rightResult.error).not.toBe('Invalid key. Allowed: y, n, a, 1-9, escape');
-
-        // Should not return single character error
-        expect(upResult.error).not.toBe('Key must be a single character or "escape"');
-        expect(downResult.error).not.toBe('Key must be a single character or "escape"');
-        expect(leftResult.error).not.toBe('Key must be a single character or "escape"');
-        expect(rightResult.error).not.toBe('Key must be a single character or "escape"');
-      }
-    });
-
-    it('should accept enter key as valid input (not reject for length or invalid key)', () => {
-      // Skip on CI - AppleScript hangs without terminal apps
-      if (process.platform === 'darwin' && !process.env.CI) {
-        const result = sendKeystrokeToTerminal('/dev/ttys001', 'enter');
+    it('should not reject arrow keys as invalid input', () => {
+      // These should not return "Invalid key" error or "Key must be a single character" error
+      // They may fail for other reasons (terminal not found, etc.)
+      const keys = ['up', 'down', 'left', 'right', 'enter'];
+      for (const key of keys) {
+        const result = sendKeystrokeToTerminal('/dev/ttys001', key);
         expect(result.error).not.toBe('Invalid key. Allowed: y, n, a, 1-9, escape');
         expect(result.error).not.toBe('Key must be a single character or "escape"');
       }
     });
 
-    it('should return error for non-macOS platform', () => {
+    it('should return error for unsupported platform', () => {
       Object.defineProperty(process, 'platform', {
-        value: 'linux',
+        value: 'win32',
       });
+      resetPlatformProvider();
       const result = sendKeystrokeToTerminal('/dev/pts/0', 'y');
       expect(result.success).toBe(false);
-      expect(result.error).toBe('This feature is only available on macOS');
+      expect(result.error).toBe('Terminal control is not supported on this platform');
     });
 
     it('should return error for invalid tty path', () => {
-      if (process.platform === 'darwin') {
-        const result = sendKeystrokeToTerminal('/invalid/path', 'y');
-        expect(result.success).toBe(false);
-        expect(result.error).toBe('Invalid TTY path');
-      }
+      const result = sendKeystrokeToTerminal('/invalid/path', 'y');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid TTY path');
     });
   });
 });

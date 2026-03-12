@@ -409,6 +409,8 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, validToken: stri
     res.writeHead(200, {
       'Content-Type': getContentType(filePath),
       'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
     });
     res.end(content);
   } catch {
@@ -429,7 +431,7 @@ interface ServerComponents {
  */
 function createServerComponents(token: string): ServerComponents {
   const server = createServer((req, res) => serveStatic(req, res, token));
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
   setupWebSocketHandlers(wss, token);
 
   const storePath = getStorePath();

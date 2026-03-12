@@ -9,6 +9,7 @@ import {
   sanitizeForAppleScript,
   setTtyTitle,
 } from '../src/utils/focus.js';
+import { resetPlatformProvider } from '../src/utils/platform/index.js';
 
 describe('focus', () => {
   describe('sanitizeForAppleScript', () => {
@@ -146,14 +147,7 @@ describe('focus', () => {
     it('should return array of supported terminal names', () => {
       const terminals = getSupportedTerminals();
       expect(Array.isArray(terminals)).toBe(true);
-      expect(terminals).toContain('iTerm2');
-      expect(terminals).toContain('Terminal.app');
-      expect(terminals).toContain('Ghostty');
-    });
-
-    it('should return exactly 3 terminals', () => {
-      const terminals = getSupportedTerminals();
-      expect(terminals).toHaveLength(3);
+      expect(terminals.length).toBeGreaterThan(0);
     });
   });
 
@@ -164,20 +158,19 @@ describe('focus', () => {
       Object.defineProperty(process, 'platform', {
         value: originalPlatform,
       });
+      resetPlatformProvider();
     });
 
     it('should return false for invalid tty path', () => {
-      // Only test on macOS where this check is reached
-      if (process.platform === 'darwin') {
-        expect(focusSession('/invalid/path')).toBe(false);
-        expect(focusSession('')).toBe(false);
-      }
+      expect(focusSession('/invalid/path')).toBe(false);
+      expect(focusSession('')).toBe(false);
     });
 
-    it('should return false on non-macOS platform', () => {
+    it('should return false on unsupported platform', () => {
       Object.defineProperty(process, 'platform', {
-        value: 'linux',
+        value: 'win32',
       });
+      resetPlatformProvider();
       expect(focusSession('/dev/pts/0')).toBe(false);
     });
   });

@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { HOOK_EVENTS, PACKAGE_NAME } from '../constants.js';
 import { askConfirmation } from '../utils/prompt.js';
 
@@ -38,7 +39,15 @@ export interface Settings {
  * @internal
  */
 function isCcmHookCommand(command: string, eventName: string): boolean {
-  return command === `ccm hook ${eventName}` || command === `npx ${PACKAGE_NAME} hook ${eventName}`;
+  const suffix = `hook ${eventName}`;
+  if (command === `ccm ${suffix}` || command === `npx ${PACKAGE_NAME} ${suffix}`) {
+    return true;
+  }
+  // Match absolute-path format: "node /path/to/ccm.js hook <event>"
+  if (command.endsWith(`ccm.js ${suffix}`)) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -54,10 +63,20 @@ function hasCcmHookForEvent(entries: HookEntry[] | undefined, eventName: string)
  * Check if ccm command is in PATH and return the appropriate command
  */
 function getCcmCommand(): string {
+  // 1. If ccm is in PATH (globally installed or npm link), use it directly
   const result = spawnSync('which', ['ccm'], { encoding: 'utf-8' });
   if (result.status === 0) {
     return 'ccm';
   }
+
+  // 2. If built dist/bin/ccm.js exists relative to project root, use absolute path
+  const thisDir = dirname(fileURLToPath(import.meta.url));
+  const ccmJs = resolve(thisDir, '../../dist/bin/ccm.js');
+  if (existsSync(ccmJs)) {
+    return `node ${ccmJs}`;
+  }
+
+  // 3. Last resort: npx (may trigger remote install)
   return `npx ${PACKAGE_NAME}`;
 }
 
