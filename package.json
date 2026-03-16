@@ -48,12 +48,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/onikan27/claude-code-monitor.git"
+    "url": "git+https://github.com/arismag/claude-code-monitor.git"
   },
   "bugs": {
-    "url": "https://github.com/onikan27/claude-code-monitor/issues"
+    "url": "https://github.com/arismag/claude-code-monitor/issues"
   },
-  "homepage": "https://github.com/onikan27/claude-code-monitor#readme",
+  "homepage": "https://github.com/arismag/claude-code-monitor#readme",
   "engines": {
     "node": ">=18.0.0"
   },

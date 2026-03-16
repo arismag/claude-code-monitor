@@ -66,7 +66,7 @@ ccm
 ### Install from source
 
 ```bash
-git clone https://github.com/onikan27/claude-code-monitor.git
+git clone https://github.com/arismag/claude-code-monitor.git
 cd claude-code-monitor
 npm install
 npm run build
@@ -299,7 +299,7 @@ This is an unofficial community tool and is not affiliated with Anthropic.
 
 ## 🐛 Issues
 
-Found a bug? [Open an issue](https://github.com/onikan27/claude-code-monitor/issues)
+Found a bug? [Open an issue](https://github.com/arismag/claude-code-monitor/issues)
 
 ---
 
