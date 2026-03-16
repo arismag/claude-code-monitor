@@ -63,6 +63,17 @@ npm install -g claude-code-monitor
 ccm
 ```
 
+### Install from source
+
+```bash
+git clone https://github.com/onikan27/claude-code-monitor.git
+cd claude-code-monitor
+npm install
+npm run build
+npm install -g .
+ccm
+```
+
 On first run, it automatically sets up hooks and launches the monitor.
 
 ### Mobile Access
