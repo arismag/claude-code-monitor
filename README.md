@@ -1,6 +1,6 @@
 # Claude Code Monitor
 
-[![npm version](https://img.shields.io/npm/v/claude-code-monitor.svg)](https://www.npmjs.com/package/claude-code-monitor)
+[![npm version](https://img.shields.io/npm/v/@arismag/claude-code-monitor.svg)](https://www.npmjs.com/package/@arismag/claude-code-monitor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
 [![Linux](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](https://kernel.org/)
@@ -53,13 +53,13 @@ Control from your phone (same Wi-Fi or Tailscale)
 ### Run with npx (no install required)
 
 ```bash
-npx claude-code-monitor
+npx @arismag/claude-code-monitor
 ```
 
 ### Or install globally
 
 ```bash
-npm install -g claude-code-monitor
+npm install -g @arismag/claude-code-monitor
 ccm
 ```
 
@@ -94,7 +94,7 @@ Access from anywhere using [Tailscale](https://tailscale.com/) (secure VPN).
 
 ```bash
 # Start with Tailscale IP
-npx claude-code-monitor -t
+npx @arismag/claude-code-monitor -t
 
 # Or if installed globally
 ccm -t
@@ -280,7 +280,7 @@ With Tailscale, communication is encrypted end-to-end, making it safe to use eve
 ## 📦 Programmatic Usage
 
 ```typescript
-import { getSessions, focusSession } from 'claude-code-monitor';
+import { getSessions, focusSession } from '@arismag/claude-code-monitor';
 
 const sessions = getSessions();
 if (sessions[0]?.tty) {

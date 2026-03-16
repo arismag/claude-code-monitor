@@ -96,7 +96,7 @@ Claude Codeの複数セッションをリアルタイム監視するCLIツール
 ### ライブラリとしての使用
 
 ```typescript
-import { getSessions, getStatusDisplay, focusSession } from 'claude-code-monitor';
+import { getSessions, getStatusDisplay, focusSession } from '@arismag/claude-code-monitor';
 ```
 
 `src/index.ts`で公開APIをエクスポートしている。
