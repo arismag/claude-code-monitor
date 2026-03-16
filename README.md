@@ -44,7 +44,17 @@ Control from your phone (same Wi-Fi or Tailscale)
 - **macOS** or **Linux** (X11)
 - **Node.js** >= 18.0.0
 - **Claude Code** installed
-- **Linux only**: `xdotool` recommended for window focus and keystroke support
+- **Linux only**: `xdotool` recommended for window focus and keystroke support:
+  ```bash
+  # Debian/Ubuntu
+  sudo apt install xdotool
+
+  # Fedora
+  sudo dnf install xdotool
+
+  # Arch
+  sudo pacman -S xdotool
+  ```
 
 ---
 
