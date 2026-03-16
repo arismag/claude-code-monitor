@@ -320,10 +320,10 @@ describe('file-store', () => {
       expect(sessions[1].session_id).toBe('new');
     });
 
-    it('should not remove sessions based on time (no timeout)', async () => {
+    it('should remove stale running sessions (no hook activity for >5 min)', async () => {
       const { writeStore, getSessions } = await import('../src/store/file-store.js');
       const now = Date.now();
-      const thirtyOneMinutesAgo = now - 31 * 60 * 1000;
+      const sixMinutesAgo = now - 6 * 60 * 1000;
 
       writeStore({
         sessions: {
@@ -332,7 +332,7 @@ describe('file-store', () => {
             cwd: '/tmp',
             tty: '/dev/ttys001',
             status: 'running',
-            updated_at: new Date(thirtyOneMinutesAgo).toISOString(),
+            updated_at: new Date(sixMinutesAgo).toISOString(),
           },
           'new:/dev/ttys002': {
             session_id: 'new',
@@ -347,8 +347,72 @@ describe('file-store', () => {
 
       const sessions = getSessions();
 
-      // Sessions are not removed based on time, only TTY existence
-      expect(sessions).toHaveLength(2);
+      // Stale running session removed, fresh one kept
+      expect(sessions).toHaveLength(1);
+      expect(sessions[0].session_id).toBe('new');
+    });
+
+    it('should keep running sessions under 5 min old', async () => {
+      const { writeStore, getSessions } = await import('../src/store/file-store.js');
+      const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+
+      writeStore({
+        sessions: {
+          'recent:/dev/ttys001': {
+            session_id: 'recent',
+            cwd: '/tmp',
+            tty: '/dev/ttys001',
+            status: 'running',
+            updated_at: new Date(twoMinutesAgo).toISOString(),
+          },
+        },
+        updated_at: new Date().toISOString(),
+      });
+
+      const sessions = getSessions();
+      expect(sessions).toHaveLength(1);
+    });
+
+    it('should keep waiting_input sessions under 30 min old', async () => {
+      const { writeStore, getSessions } = await import('../src/store/file-store.js');
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+
+      writeStore({
+        sessions: {
+          'waiting:/dev/ttys001': {
+            session_id: 'waiting',
+            cwd: '/tmp',
+            tty: '/dev/ttys001',
+            status: 'waiting_input',
+            updated_at: new Date(tenMinutesAgo).toISOString(),
+          },
+        },
+        updated_at: new Date().toISOString(),
+      });
+
+      const sessions = getSessions();
+      expect(sessions).toHaveLength(1);
+    });
+
+    it('should remove stale waiting_input sessions (>30 min)', async () => {
+      const { writeStore, getSessions } = await import('../src/store/file-store.js');
+      const thirtyOneMinutesAgo = Date.now() - 31 * 60 * 1000;
+
+      writeStore({
+        sessions: {
+          'stale-wait:/dev/ttys001': {
+            session_id: 'stale-wait',
+            cwd: '/tmp',
+            tty: '/dev/ttys001',
+            status: 'waiting_input',
+            updated_at: new Date(thirtyOneMinutesAgo).toISOString(),
+          },
+        },
+        updated_at: new Date().toISOString(),
+      });
+
+      const sessions = getSessions();
+      expect(sessions).toHaveLength(0);
     });
   });
 

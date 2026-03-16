@@ -1,7 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { WRITE_DEBOUNCE_MS } from '../constants.js';
+import {
+  SESSION_STALENESS_MS,
+  SESSION_WAITING_STALENESS_MS,
+  WRITE_DEBOUNCE_MS,
+} from '../constants.js';
 import type { HookEvent, Session, SessionStatus, StoreData } from '../types/index.js';
 import { getLastAssistantMessage } from '../utils/transcript.js';
 import { isTtyAlive } from '../utils/tty-cache.js';
@@ -164,6 +168,22 @@ export function updateSession(event: HookEvent): Session {
 
   const existing = store.sessions[key];
 
+  // On Stop, remove the session entirely rather than leaving it as "stopped"
+  if (event.hook_event_name === 'Stop') {
+    const stoppedSession: Session = {
+      session_id: event.session_id,
+      cwd: event.cwd ?? existing?.cwd ?? '',
+      tty: event.tty ?? existing?.tty,
+      status: 'stopped',
+      created_at: existing?.created_at ?? now,
+      updated_at: now,
+      lastMessage: existing?.lastMessage,
+    };
+    delete store.sessions[key];
+    writeStore(store);
+    return stoppedSession;
+  }
+
   // Get latest assistant message from transcript
   const assistantMessage = event.transcript_path
     ? getLastAssistantMessage(event.transcript_path)
@@ -190,11 +210,23 @@ export function getSessions(): Session[] {
   const store = readStore();
 
   let hasChanges = false;
+  const now = Date.now();
   for (const [key, session] of Object.entries(store.sessions)) {
     const isTtyStillAlive = isTtyAlive(session.tty);
 
-    // Only remove sessions when TTY no longer exists
+    // Remove sessions when TTY no longer exists
     if (!isTtyStillAlive) {
+      delete store.sessions[key];
+      hasChanges = true;
+      continue;
+    }
+
+    // Remove stale sessions (no hook activity for too long)
+    const age = now - new Date(session.updated_at).getTime();
+    const isStale =
+      (session.status === 'running' && age > SESSION_STALENESS_MS) ||
+      (session.status === 'waiting_input' && age > SESSION_WAITING_STALENESS_MS);
+    if (isStale) {
       delete store.sessions[key];
       hasChanges = true;
     }

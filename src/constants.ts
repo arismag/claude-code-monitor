@@ -20,6 +20,12 @@ export const WRITE_DEBOUNCE_MS = 100;
 /** Periodic refresh interval for timeout detection in milliseconds (60 seconds) */
 export const SESSION_REFRESH_INTERVAL_MS = 60_000;
 
+/** Maximum age in ms before a "running" session is considered stale and removed (5 minutes) */
+export const SESSION_STALENESS_MS = 5 * 60 * 1000;
+
+/** Maximum age in ms before a "waiting_input" session is considered stale and removed (30 minutes) */
+export const SESSION_WAITING_STALENESS_MS = 30 * 60 * 1000;
+
 /**
  * QRコード表示に必要な最小ターミナル高さ
  * Header(1) + Sessions(3) + Shortcuts(2) + WebUI with QR(16) = 22行
